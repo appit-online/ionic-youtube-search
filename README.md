@@ -30,6 +30,7 @@ import * as yt from 'ionic-youtube-search';
  * Given a search query, searching on youtube
  * @param {string} search value (videoId).
  */
+const videos = await yt.search('Hello World');
 const videos = await yt.search('y5kIrbG2gRc');
 console.log('Videos:');
 console.log(videos);
