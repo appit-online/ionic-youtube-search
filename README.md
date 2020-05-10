@@ -1,6 +1,6 @@
 # [ionic-youtube-search: Node.js](https://github.com/appit-online/ionic-youtube-search)
 
-Fetch meta information about YouTube videos including stream urls
+Search videos on YouTube without API key in ionic apps
 
 **Table of contents:**
 

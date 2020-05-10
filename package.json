@@ -1,7 +1,7 @@
 {
   "name": "ionic-youtube-search",
-  "version": "1.0.0",
-  "description": "Fetch meta information about YouTube videos including stream urls",
+  "version": "1.0.1",
+  "description": "Search videos on YouTube without API key in ionic apps",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
