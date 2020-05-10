@@ -34,6 +34,50 @@ const videos = await yt.search('y5kIrbG2gRc');
 console.log('Videos:');
 console.log(videos);
 
+[
+   {
+      "id":{
+         "videoId":"y5kIrbG2gRc"
+      },
+      "snippet":{
+         "url":"https://www.youtube.com/watch?v=y5kIrbG2gRc",
+         "publishedAt":"3 months ago",
+         "thumbnails":{
+            "default":{
+               "url":"https://i.ytimg.com/vi/y5kIrbG2gRc/default.jpg",
+               "width":120,
+               "height":90
+            },
+            "high":{
+               "url":"https://i.ytimg.com/vi/y5kIrbG2gRc/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLC9c-4JI285aXTlg99bne9V224hVw",
+               "width":686,
+               "height":386
+            }
+         },
+         "duration":{
+            "runs":[
+               {
+                  "text":"2:01"
+               }
+            ],
+            "accessibility":{
+               "accessibilityData":{
+                  "label":"2 minutes, 1 second"
+               }
+            }
+         },
+         "title":"How to Download Free Music On Your iPhone (OFFLINE) 2020",
+         "views":{
+            "runs":[
+               {
+                  "text":"51 views"
+               }
+            ]
+         }
+      }
+   }
+]
+
 ```
 
 ```javascript
