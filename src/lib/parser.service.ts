@@ -4,6 +4,7 @@ export class ParserService {
     if (!data || !data.compactVideoRenderer) return;
 
     let title = data.compactVideoRenderer.title.runs[0].text;
+    title = title.replace("\\\\", "\\");
     title = decodeURIComponent(title);
 
     const res = {
