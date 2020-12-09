@@ -1,53 +1,62 @@
 import {HTTP} from '@ionic-native/http/ngx';
-
+import { ParserService } from './parser.service';
 
 export async function searchVideo(searchString: string) {
   const httpClient = new HTTP();
   const YOUTUBE_URL = 'https://www.youtube.com';
 
-  const searchRes: any = await httpClient.get(encodeURI(`${YOUTUBE_URL}/results?search_query=${searchString}&sp=EgIQAQ%253D%253D`), {}, {});
-  const searchValue = await searchRes.data;
-  const pattern = new RegExp('initial-data"><!-- {.*--></div><script >');
-  const matches = searchValue.match(pattern);
-  let content = matches[0];
-  content = content.replace('initial-data"><!-- ', '');
-  content = content.replace('--></div><script >', '');
+  const results = [];
+  let details = [];
+  let fetched = false;
+  const options = { type: "video", limit: 0 };
 
-  const contentJson: any = JSON.parse(content);
-  const contentObject = contentJson.contents.sectionListRenderer.contents.filter((listing: any) => listing.itemSectionRenderer !== undefined);
+  const searchRes: any = await httpClient.get(`${YOUTUBE_URL}/results?q=${encodeURI(searchString.trim())}&hl=en`, {}, {});
+  let html = await searchRes.data;
 
-  const videos = [];
-  for (let result of contentObject[0].itemSectionRenderer.contents) {
-    try{
-      if(result.compactVideoRenderer !== undefined){
-        result = result.compactVideoRenderer;
+  // try to parse html
+  try {
+    const data = html.split("ytInitialData")[1].split("');</script>")[0];
+    html = data.replace(/\\x([0-9A-F]{2})/ig, (...items: any[]) => {
+      return String.fromCharCode(parseInt(items[1], 16));
+    });
+  } catch(e) { /* do nothing */ }
 
-        const videoId = result.videoId;
-        const url = YOUTUBE_URL + '/watch?v=' + videoId;
-        const duration = result.lengthText;
-        const thumbnailURLs = result.thumbnail.thumbnails;
-        const publishedAt = result.publishedTimeText.runs[0].text;
-        const title = result.title.runs[0].text;
-        const views = result.viewCountText;
+  try {
+    details = JSON.parse(html.split('{"itemSectionRenderer":{"contents":')[html.split('{"itemSectionRenderer":{"contents":').length - 1].split(',"continuations":[{')[0]);
+    fetched = true;
+  } catch(e) { /* do nothing */ }
 
-        videos.push({
-          id: {
-            videoId
-          },
-          snippet: {
-            url,
-            publishedAt,
-            thumbnails: {default: thumbnailURLs[0], high: thumbnailURLs[thumbnailURLs.length - 1]},
-            duration,
-            title,
-            views,
-          }
-        });
-      }
-    }catch(error){
-      // tslint:disable-next-line:no-console
-      console.log(error);
-    }
+  if (!fetched) {
+    try {
+      details = JSON.parse(html.split('{"itemSectionRenderer":')[html.split('{"itemSectionRenderer":').length - 1].split('},{"continuationItemRenderer":{')[0]).contents;
+      fetched = true;
+    } catch(e) { /* do nothing */ }
   }
-  return videos;
+
+  if (!fetched) return [];
+
+  // tslint:disable-next-line:prefer-for-of
+  for (let i = 0; i < details.length; i++) {
+    if (typeof options.limit === "number" && options.limit > 0 && results.length >= options.limit) break;
+    const data = details[i];
+    let res;
+    if (options.type === "all") {
+      if (!!data.videoRenderer) options.type = "video";
+      else if (!!data.channelRenderer) options.type = "channel";
+      else if (!!data.playlistRenderer) options.type = "playlist";
+      else continue;
+    }
+
+    if (options.type === "video") {
+      const parserService = new ParserService();
+      const parsed = parserService.parseVideo(data);
+      if (!parsed) continue;
+      res = parsed;
+    }
+
+    results.push(res);
+  }
+
+  return results;
 }
+
