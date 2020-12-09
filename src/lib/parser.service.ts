@@ -3,9 +3,7 @@ export class ParserService {
   parseVideo(data: any) {
     if (!data || !data.compactVideoRenderer) return;
 
-    const badge = data.compactVideoRenderer.ownerBadges && data.compactVideoRenderer.ownerBadges[0];
-
-    let res = {
+    const res = {
       id: {
         videoId: data.compactVideoRenderer.videoId
       },
