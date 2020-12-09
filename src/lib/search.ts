@@ -1,7 +1,7 @@
 import {HTTP} from '@ionic-native/http/ngx';
 import { ParserService } from './parser.service';
 
-export async function searchVideo(searchString: string) {
+export async function searchVideo(searchString: string, token?: string) {
   const httpClient = new HTTP();
   const YOUTUBE_URL = 'https://www.youtube.com';
 
@@ -12,25 +12,28 @@ export async function searchVideo(searchString: string) {
 
   const searchRes: any = await httpClient.get(`${YOUTUBE_URL}/results?q=${encodeURI(searchString.trim())}&hl=en`, {}, {});
   let html = await searchRes.data;
-
   // try to parse html
   try {
-    const data = html.split("ytInitialData")[1].split("');</script>")[0];
-    html = data.replace(/\\x([0-9A-F]{2})/ig, (...items: any[]) => {
-      return String.fromCharCode(parseInt(items[1], 16));
+    const data = html.split("ytInitialData = '")[1].split("';</script>")[0];
+    // @ts-ignore
+    html = data.replace(/\\x([0-9A-F]{2})/ig, (...items) => {
+         return String.fromCharCode(parseInt(items[1], 16));
     });
-  } catch(e) { /* do nothing */ }
 
-  try {
+  } catch(e) { /* nothing */}
+
+  html = JSON.stringify(html);
+
+    try {
     details = JSON.parse(html.split('{"itemSectionRenderer":{"contents":')[html.split('{"itemSectionRenderer":{"contents":').length - 1].split(',"continuations":[{')[0]);
     fetched = true;
-  } catch(e) { /* do nothing */ }
+  } catch(e) { /* nothing */ }
 
   if (!fetched) {
     try {
       details = JSON.parse(html.split('{"itemSectionRenderer":')[html.split('{"itemSectionRenderer":').length - 1].split('},{"continuationItemRenderer":{')[0]).contents;
       fetched = true;
-    } catch(e) { /* do nothing */ }
+    } catch(e) { /* nothing */ }
   }
 
   if (!fetched) return [];

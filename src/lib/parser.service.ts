@@ -42,5 +42,4 @@ export class ParserService {
 
     return res;
   }
-
 }
