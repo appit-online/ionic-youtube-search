@@ -19,9 +19,10 @@ export async function searchVideo(searchString: string, token?: string) {
     html = data.replace(/\\x([0-9A-F]{2})/ig, (...items) => {
          return String.fromCharCode(parseInt(items[1], 16));
     });
+
     html = html.replaceAll("\\\\\"", "");
     html = JSON.parse(html)
-  } catch(e) { /* nothing */}
+  } catch(e) { /* NOTHING*/}
 
   if(html && html.contents && html.contents.sectionListRenderer && html.contents.sectionListRenderer.contents
     && html.contents.sectionListRenderer.contents.length > 0 && html.contents.sectionListRenderer.contents[0].itemSectionRenderer &&
