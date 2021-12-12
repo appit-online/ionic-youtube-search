@@ -1,6 +1,9 @@
 import {HTTP} from '@ionic-native/http/ngx';
 import { ParserService } from './parser.service';
 
+const rfc3986EncodeURIComponent = (str: string) => encodeURIComponent(str).replace(/[!'()*]/g, escape);
+
+
 export async function searchVideo(searchString: string, token?: string) {
   const httpClient = new HTTP();
   const YOUTUBE_URL = 'https://www.youtube.com';
@@ -10,7 +13,7 @@ export async function searchVideo(searchString: string, token?: string) {
   let fetched = false;
   const options = { type: "video", limit: 0 };
 
-  const searchRes: any = await httpClient.get(`${YOUTUBE_URL}/results?q=${encodeURI(searchString.trim())}&hl=en`, {}, {});
+  const searchRes: any = await httpClient.get(`${YOUTUBE_URL}/results?q=${rfc3986EncodeURIComponent(searchString.trim())}&hl=en`, {}, {});
   let html = await searchRes.data;
   // try to parse html
   try {
