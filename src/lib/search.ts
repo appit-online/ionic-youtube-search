@@ -15,6 +15,7 @@ export async function searchVideo(searchString: string, token?: string) {
 
   const searchRes: any = await httpClient.get(`${YOUTUBE_URL}/results?q=${rfc3986EncodeURIComponent(searchString.trim())}&hl=en`, {}, {});
   let html = await searchRes.data;
+
   // try to parse html
   try {
     const data = html.split("ytInitialData = '")[1].split("';</script>")[0];
