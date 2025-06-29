@@ -88,17 +88,24 @@ export class ParserService {
 
   private extractThumbnail(vr: any) {
     const thumbnails = vr.thumbnail?.thumbnails ?? [];
-    const thumb = thumbnails[thumbnails.length - 1];
-    return thumb
-      ? {
-        id: vr.videoId,
-        url: thumb.url,
-        default: thumb,
-        high: thumb,
-        height: thumb.height,
-        width: thumb.width
-      }
-      : null;
+
+    if (!thumbnails.length) return null;
+
+    // Finde das Thumbnail mit der höchsten Auflösung (nach Fläche, Höhe oder Breite)
+    const best = thumbnails.reduce((max: any, thumb: any) => {
+      const currentArea = (thumb.width ?? 0) * (thumb.height ?? 0);
+      const maxArea = (max.width ?? 0) * (max.height ?? 0);
+      return currentArea > maxArea ? thumb : max;
+    });
+
+    return {
+      id: vr.videoId,
+      url: best.url,
+      default: best,
+      high: best,
+      height: best.height,
+      width: best.width
+    };
   }
 
   private extractViews(text: string | undefined): number {
