@@ -1,6 +1,6 @@
 {
   "name": "ionic-youtube-search",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Search videos on YouTube without API key in ionic apps",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -49,6 +49,7 @@
   "devDependencies": {
     "@types/jest": "^27.0.3",
     "@types/node": "^16.11.12",
+    "@types/jsonpath": "^0.2.4",
     "jest": "^27.4.4",
     "prettier": "^2.5.1",
     "ts-jest": "^27.1.1",
@@ -60,6 +61,8 @@
     "@angular/core": "^13.1.0",
     "@ionic-native/core": "^5.36.0",
     "@ionic-native/http": "^5.36.0",
-    "rxjs": "^7.4.0"
+    "rxjs": "^7.4.0",
+    "jsonpath": "^1.1.1"
+
   }
 }

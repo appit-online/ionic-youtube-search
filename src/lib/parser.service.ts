@@ -1,91 +1,80 @@
 export class ParserService {
 
   parseVideo(data: any) {
-    if (!data) return undefined;
+    if (!data?.videoRenderer) return undefined;
 
     try {
-      let title = '';
-      if (data.compactVideoRenderer){
-        title = data.compactVideoRenderer.title.runs[0].text;
-        title = title.replace("\\\\", "\\");
+      const vr = data.videoRenderer;
 
-        try {
-          title = decodeURIComponent(title);
-        } catch (e) {
-          // @ts-ignore
-        }
+      // Titel extrahieren und evtl. Backslashes fixen
+      let title = vr.title?.runs?.[0]?.text ?? '';
+      title = this.cleanUpName(title);
 
-        return {
-          id: {
-            videoId: data.compactVideoRenderer.videoId
-          },
-          url: `https://www.youtube.com/watch?v=${data.compactVideoRenderer.videoId}`,
-          title,
-          description: data.compactVideoRenderer.descriptionSnippet && data.compactVideoRenderer.descriptionSnippet.runs[0] ? data.compactVideoRenderer.descriptionSnippet.runs[0].text : "",
-          duration_raw: data.compactVideoRenderer.lengthText ? data.compactVideoRenderer.lengthText.simpleText : null,
-          snippet: {
-            url: `https://www.youtube.com/watch?v=${data.compactVideoRenderer.videoId}`,
-            duration: data.compactVideoRenderer.lengthText ? data.compactVideoRenderer.lengthText.simpleText : null,
-            publishedAt: data.compactVideoRenderer.publishedTimeText ? data.compactVideoRenderer.publishedTimeText.simpleText : null,
-            thumbnails: {
-              id: data.compactVideoRenderer.videoId,
-              url: data.compactVideoRenderer.thumbnail.thumbnails[data.compactVideoRenderer.thumbnail.thumbnails.length - 1].url,
-              default: data.compactVideoRenderer.thumbnail.thumbnails[data.compactVideoRenderer.thumbnail.thumbnails.length - 1],
-              high: data.compactVideoRenderer.thumbnail.thumbnails[data.compactVideoRenderer.thumbnail.thumbnails.length - 1],
-              height: data.compactVideoRenderer.thumbnail.thumbnails[data.compactVideoRenderer.thumbnail.thumbnails.length - 1].height,
-              width: data.compactVideoRenderer.thumbnail.thumbnails[data.compactVideoRenderer.thumbnail.thumbnails.length - 1].width
-            },
-            title,
-            views: data.compactVideoRenderer.viewCountText && data.compactVideoRenderer.viewCountText.simpleText ? data.compactVideoRenderer.viewCountText.simpleText.replace(/[^0-9]/g, "") : 0
-          },
-          views: data.compactVideoRenderer.viewCountText && data.compactVideoRenderer.viewCountText.simpleText ? data.compactVideoRenderer.viewCountText.simpleText.replace(/[^0-9]/g, "") : 0
-        };
-
-      } else if (data.videoWithContextRenderer){
-        if (data.videoWithContextRenderer.headline?.runs && data.videoWithContextRenderer.headline?.runs.length > 0){
-          title = data.videoWithContextRenderer.headline?.runs[0].text;
-        }else{
-          title = data.videoWithContextRenderer.headline?.accessibility?.accessibilityData?.label;
-        }
-
-        title = title.replace("\\\\", "\\");
-
-        try {
-          title = decodeURIComponent(title);
-        } catch (e) {
-          // @ts-ignore
-        }
-
-        return {
-          id: {
-            videoId: data.videoWithContextRenderer.videoId
-          },
-          url: `https://www.youtube.com/watch?v=${data.videoWithContextRenderer.videoId}`,
-          title,
-          description: '',
-          duration_raw: data.videoWithContextRenderer.lengthText?.accessibility?.accessibilityData?.text,
-          snippet: {
-            url: `https://www.youtube.com/watch?v=${data.videoWithContextRenderer.videoId}`,
-            duration: data.videoWithContextRenderer.lengthText?.accessibility?.accessibilityData?.text,
-            publishedAt: data.videoWithContextRenderer.publishedTimeText?.runs?.length > 0 ? data.videoWithContextRenderer.publishedTimeText?.runs[0].text : null,
-            thumbnails: {
-              id: data.videoWithContextRenderer.videoId,
-              url: data.videoWithContextRenderer.thumbnail.thumbnails[data.videoWithContextRenderer.thumbnail.thumbnails.length - 1].url,
-              default: data.videoWithContextRenderer.thumbnail.thumbnails[data.videoWithContextRenderer.thumbnail.thumbnails.length - 1],
-              high: data.videoWithContextRenderer.thumbnail.thumbnails[data.videoWithContextRenderer.thumbnail.thumbnails.length - 1],
-              height: data.videoWithContextRenderer.thumbnail.thumbnails[data.videoWithContextRenderer.thumbnail.thumbnails.length - 1].height,
-              width: data.videoWithContextRenderer.thumbnail.thumbnails[data.videoWithContextRenderer.thumbnail.thumbnails.length - 1].width
-            },
-            title,
-            views: data.videoWithContextRenderer.shortViewCountText?.accessibility?.accessibilityData?.label?.replace(/[^0-9]/g, "")
-          },
-          views: data.videoWithContextRenderer.shortViewCountText?.accessibility?.accessibilityData?.label?.replace(/[^0-9]/g, "")
-        };
+      // Optional: decodeURIComponent nur, wenn es sinnvoll ist (hier z.B. keine Fehler werfen)
+      try {
+        title = decodeURIComponent(title);
+      } catch {
+        // ignore decode errors
       }
 
-      return undefined
-    } catch (e) {
-      return undefined
+      // Thumbnail: letztes Thumbnail-Objekt nutzen (meist größte Auflösung)
+      const thumbnails = vr.thumbnail?.thumbnails ?? [];
+      const thumbnail = thumbnails.length ? thumbnails[thumbnails.length - 1] : null;
+
+      // Views aus Text extrahieren und in Zahl konvertieren
+      const viewsText = vr.viewCountText?.simpleText ?? '';
+      const views = Number(viewsText.replace(/\D/g, '')) || 0;
+
+      return {
+        id: {
+          videoId: vr.videoId
+        },
+        url: `https://www.youtube.com/watch?v=${vr.videoId}`,
+        title,
+        description: vr.descriptionSnippet?.runs?.[0]?.text ?? '',
+        duration_raw: vr.lengthText?.simpleText ?? null,
+        snippet: {
+          url: `https://www.youtube.com/watch?v=${vr.videoId}`,
+          duration: vr.lengthText?.simpleText ?? null,
+          publishedAt: vr.publishedTimeText?.simpleText ?? null,
+          thumbnails: thumbnail
+            ? {
+              id: vr.videoId,
+              url: thumbnail.url,
+              default: thumbnail,
+              high: thumbnail,
+              height: thumbnail.height,
+              width: thumbnail.width
+            }
+            : null,
+          title
+        },
+        views
+      };
+    } catch {
+      return undefined;
     }
   }
+
+
+  cleanUpName(name: string): string {
+    return  name
+      // Unicode-Escape-Sequenzen wie \uXXXX in Zeichen umwandeln
+      .replace(/\\u[\dA-Fa-f]{4}/g, (match) =>
+        String.fromCharCode(parseInt(match.slice(2), 16))
+      )
+      // HTML Entities ersetzen
+      .replace(/&amp;/gi, '&')
+      .replace(/&quot;/gi, '"')
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/&apos;/gi, "'")
+      // Unerlaubte Zeichen entfernen, nur erlaubte bleiben
+      .replace(/[^a-zA-Z0-9äöüÄÖÜß \-_.!,?()'"&%:;]/g, '')
+      // Mehrere Leerzeichen auf eins reduzieren
+      .replace(/\s+/g, ' ')
+      // Leerzeichen am Anfang und Ende entfernen
+      .trim();
+  }
+
 }
