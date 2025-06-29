@@ -1,79 +1,109 @@
 export class ParserService {
-
   parseVideo(data: any) {
+    if (!data) return undefined;
+
     try {
-      const vr = data.compactVideoRenderer ?? data.videoWithContextRenderer;
-      if (!vr) return undefined;
+      if (data.compactVideoRenderer) {
+        const vr = data.compactVideoRenderer;
 
-      // Titel extrahieren und evtl. Backslashes fixen
-      let title = vr.title?.runs?.[0]?.text ?? '';
-      title = this.cleanUpName(title);
+        let title = vr.title?.runs?.[0]?.text ?? '';
+        title = this.cleanUpName(title);
 
-      // Optional: decodeURIComponent nur, wenn es sinnvoll ist (hier z.B. keine Fehler werfen)
-      try {
-        title = decodeURIComponent(title);
-      } catch {
-        // ignore decode errors
+        try {
+          title = decodeURIComponent(title);
+        } catch {}
+
+        const thumbnail = this.extractThumbnail(vr);
+        const views = this.extractViews(vr.viewCountText?.simpleText);
+
+        return {
+          id: { videoId: vr.videoId },
+          url: `https://www.youtube.com/watch?v=${vr.videoId}`,
+          title,
+          description: vr.descriptionSnippet?.runs?.[0]?.text ?? '',
+          duration_raw: vr.lengthText?.simpleText ?? null,
+          snippet: {
+            url: `https://www.youtube.com/watch?v=${vr.videoId}`,
+            duration: vr.lengthText?.simpleText ?? null,
+            publishedAt: vr.publishedTimeText?.simpleText ?? null,
+            thumbnails: thumbnail,
+            title,
+            views
+          },
+          views
+        };
       }
 
-      // Thumbnail: letztes Thumbnail-Objekt nutzen (meist größte Auflösung)
-      const thumbnails = vr.thumbnail?.thumbnails ?? [];
-      const thumbnail = thumbnails.length ? thumbnails[thumbnails.length - 1] : null;
+      if (data.videoWithContextRenderer) {
+        const vr = data.videoWithContextRenderer;
 
-      // Views aus Text extrahieren und in Zahl konvertieren
-      const viewsText = vr.viewCountText?.simpleText ?? '';
-      const views = Number(viewsText.replace(/\D/g, '')) || 0;
+        let title = vr.headline?.runs?.[0]?.text
+          ?? vr.headline?.accessibility?.accessibilityData?.label
+          ?? '';
+        title = this.cleanUpName(title);
 
-      return {
-        id: {
-          videoId: vr.videoId
-        },
-        url: `https://www.youtube.com/watch?v=${vr.videoId}`,
-        title,
-        description: vr.descriptionSnippet?.runs?.[0]?.text ?? '',
-        duration_raw: vr.lengthText?.simpleText ?? null,
-        snippet: {
+        try {
+          title = decodeURIComponent(title);
+        } catch {}
+
+        const thumbnail = this.extractThumbnail(vr);
+        const views = this.extractViews(vr.shortViewCountText?.accessibility?.accessibilityData?.label);
+
+        return {
+          id: { videoId: vr.videoId },
           url: `https://www.youtube.com/watch?v=${vr.videoId}`,
-          duration: vr.lengthText?.simpleText ?? null,
-          publishedAt: vr.publishedTimeText?.simpleText ?? null,
-          thumbnails: thumbnail
-            ? {
-              id: vr.videoId,
-              url: thumbnail.url,
-              default: thumbnail,
-              high: thumbnail,
-              height: thumbnail.height,
-              width: thumbnail.width
-            }
-            : null,
-          title
-        },
-        views
-      };
+          title,
+          description: '',
+          duration_raw: vr.lengthText?.accessibility?.accessibilityData?.text ?? null,
+          snippet: {
+            url: `https://www.youtube.com/watch?v=${vr.videoId}`,
+            duration: vr.lengthText?.accessibility?.accessibilityData?.text ?? null,
+            publishedAt: vr.publishedTimeText?.runs?.[0]?.text ?? null,
+            thumbnails: thumbnail,
+            title,
+            views
+          },
+          views
+        };
+      }
+
+      return undefined;
     } catch {
       return undefined;
     }
   }
 
-
   cleanUpName(name: string): string {
-    return  name
-      // Unicode-Escape-Sequenzen wie \uXXXX in Zeichen umwandeln
-      .replace(/\\u[\dA-Fa-f]{4}/g, (match) =>
-        String.fromCharCode(parseInt(match.slice(2), 16))
-      )
-      // HTML Entities ersetzen
+    return name
+      .replace(/\\u[\dA-Fa-f]{4}/g, (m) => String.fromCharCode(parseInt(m.slice(2), 16)))
       .replace(/&amp;/gi, '&')
       .replace(/&quot;/gi, '"')
       .replace(/&lt;/gi, '<')
       .replace(/&gt;/gi, '>')
       .replace(/&apos;/gi, "'")
-      // Unerlaubte Zeichen entfernen, nur erlaubte bleiben
       .replace(/[^a-zA-Z0-9äöüÄÖÜß \-_.!,?()'"&%:;]/g, '')
-      // Mehrere Leerzeichen auf eins reduzieren
       .replace(/\s+/g, ' ')
-      // Leerzeichen am Anfang und Ende entfernen
       .trim();
   }
 
+  private extractThumbnail(vr: any) {
+    const thumbnails = vr.thumbnail?.thumbnails ?? [];
+    const thumb = thumbnails[thumbnails.length - 1];
+    return thumb
+      ? {
+        id: vr.videoId,
+        url: thumb.url,
+        default: thumb,
+        high: thumb,
+        height: thumb.height,
+        width: thumb.width
+      }
+      : null;
+  }
+
+  private extractViews(text: string | undefined): number {
+    if (!text) return 0;
+    const raw = text.replace(/[^0-9]/g, '');
+    return Number(raw) || 0;
+  }
 }
