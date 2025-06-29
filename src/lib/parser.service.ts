@@ -11,7 +11,7 @@ export class ParserService {
 
         try {
           title = decodeURIComponent(title);
-        } catch {}
+        } catch {/* ignore */}
 
         const thumbnail = this.extractThumbnail(vr);
         const views = this.extractViews(vr.viewCountText?.simpleText);
@@ -44,7 +44,7 @@ export class ParserService {
 
         try {
           title = decodeURIComponent(title);
-        } catch {}
+        } catch {/* ignore */}
 
         const thumbnail = this.extractThumbnail(vr);
         const views = this.extractViews(vr.shortViewCountText?.accessibility?.accessibilityData?.label);

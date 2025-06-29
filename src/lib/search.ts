@@ -1,4 +1,4 @@
-import { HTTP } from '@ionic-native/http/ngx';
+import { HTTP } from '@awesome-cordova-plugins/http/ngx';
 import { ParserService } from './parser.service';
 
 const USER_AGENT = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html) (yt-search; https://www.npmjs.com/package/yt-search)';
@@ -11,11 +11,7 @@ export async function searchVideo(searchString: string, token?: string) {
   const results = [];
   const options = { type: 'video', limit: 0 };
 
-  const searchRes: any = await httpClient.get(
-    `${YOUTUBE_URL}/results?q=${rfc3986EncodeURIComponent(searchString.trim())}&hl=en`,
-    {},
-    { 'user-agent': USER_AGENT }
-  );
+  const searchRes: any = await httpClient.get(`${YOUTUBE_URL}/results?q=${rfc3986EncodeURIComponent(searchString.trim())}&hl=en`, {}, { 'user-agent': USER_AGENT });
   const html = await searchRes.data;
 
   let data: any = null;
@@ -55,7 +51,7 @@ export async function searchVideo(searchString: string, token?: string) {
       const parsed = JSON.parse(jsonStr);
       details = parsed.itemSectionRenderer.contents;
       fetched = true;
-    } catch (e) { }
+    } catch (e) { /* ignore */ }
   }
 
   // Fallback 2
@@ -66,7 +62,7 @@ export async function searchVideo(searchString: string, token?: string) {
       const parsed = JSON.parse(jsonStr);
       details = parsed.itemSectionRenderer.contents;
       fetched = true;
-    } catch (e) { }
+    } catch (e) { /* ignore */ }
   }
 
   if (!fetched || !details.length) return [];
