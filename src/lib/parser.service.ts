@@ -1,10 +1,9 @@
 export class ParserService {
 
   parseVideo(data: any) {
-    if (!data?.videoRenderer) return undefined;
-
     try {
-      const vr = data.videoRenderer;
+      const vr = data.compactVideoRenderer ?? data.videoWithContextRenderer;
+      if (!vr) return undefined;
 
       // Titel extrahieren und evtl. Backslashes fixen
       let title = vr.title?.runs?.[0]?.text ?? '';
