@@ -67,6 +67,39 @@ export class ParserService {
         };
       }
 
+      if (data.videoRenderer) {
+        const vr = data.videoRenderer;
+
+        let title = vr.title?.runs?.[0]?.text
+          ?? vr.title?.accessibility?.accessibilityData?.label
+          ?? '';
+        title = this.cleanUpName(title);
+
+        try {
+          title = decodeURIComponent(title);
+        } catch {/* ignore */}
+
+        const thumbnail = this.extractThumbnail(vr);
+        const views = this.extractViews(vr.shortViewCountText?.accessibility?.accessibilityData?.label);
+
+        return {
+          id: { videoId: vr.videoId },
+          url: `https://www.youtube.com/watch?v=${vr.videoId}`,
+          title,
+          description: '',
+          duration_raw: vr.lengthText?.accessibility?.accessibilityData?.text ?? null,
+          snippet: {
+            url: `https://www.youtube.com/watch?v=${vr.videoId}`,
+            duration: vr.lengthText?.accessibility?.accessibilityData?.text ?? null,
+            publishedAt: vr.publishedTimeText?.runs?.[0]?.text ?? null,
+            thumbnails: thumbnail,
+            title,
+            views
+          },
+          views
+        };
+      }
+
       return undefined;
     } catch {
       return undefined;

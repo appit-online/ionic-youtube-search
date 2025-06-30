@@ -34,7 +34,9 @@ export async function searchVideo(searchString: string, token?: string) {
         const unescaped = rawJson.replace(/\\x([0-9A-F]{2})/gi, (_: any, hex: any) =>
           String.fromCharCode(parseInt(hex, 16))
         );
-        html = unescaped.replace(/\\"/g, '"');
+
+        // Repariere escaped doppelte Anführungszeichen
+        html = unescaped.replace(/\\\\"/g, '"');
       } catch (parseError) {
         // tslint:disable-next-line:no-console
         console.warn('ytInitialData nicht gefunden oder fehlerhaft');
