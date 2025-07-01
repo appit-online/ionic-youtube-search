@@ -108,13 +108,16 @@ export class ParserService {
 
   cleanUpName(name: string): string {
     return name
-      .replace(/\\u[\dA-Fa-f]{4}/g, (m) => String.fromCharCode(parseInt(m.slice(2), 16)))
+      // Unicode-Escape-Sequenzen wie \uXXXX in Zeichen umwandeln
+      .replace(/\\u[\dA-Fa-f]{4}/g, (match) =>
+        String.fromCharCode(parseInt(match.slice(2), 16))
+      )
       .replace(/&amp;/gi, '&')
       .replace(/&quot;/gi, '"')
       .replace(/&lt;/gi, '<')
       .replace(/&gt;/gi, '>')
       .replace(/&apos;/gi, "'")
-      .replace(/[^a-zA-Z0-9äöüÄÖÜß \-_.!,?()'"&%:;]/g, '')
+      .replace(/[^\p{L}\p{N}\s\-_.,!?'":;%&()]/gu, '')
       .replace(/\s+/g, ' ')
       .trim();
   }
